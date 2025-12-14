@@ -148,45 +148,47 @@
                 </div>
             </div>
 
+            <!-- =========================
+                 GET IN TOUCH (UPDATED ONLY)
+                 ========================= -->
             <div class="col-lg-6 wow fadeIn" data-wow-delay="0.1s">
                 <p class="d-inline-block border rounded text-primary fw-semi-bold py-1 px-3">Contact Us</p>
                 <h1 class="display-5 mb-4">Get in Touch</h1>
                 <p class="mb-4">
-                    Do you have questions about our microfinance services, banking solutions, or other
-                    financial products? Please reach out to us using the form below, and our team will
-                    be happy to assist you.
+                    Do you have questions about our microfinance services, banking agency solutions, micro-insurance,
+                    or financial training and advisory? Please reach out using the form below, and our team will assist you.
                 </p>
 
                 <!-- Success and Error Messages -->
                 <div id="successAlert" class="alert alert-success alert-dismissible fade show" role="alert">
                     <strong>Success!</strong> Your message has been sent successfully. We'll get back to you within 24 hours.
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <button type="button" class="btn-close" aria-label="Close"></button>
                 </div>
 
                 <div id="errorAlert" class="alert alert-danger alert-dismissible fade show" role="alert">
                     <strong>Error!</strong> <span id="errorMessage">There was a problem sending your message. Please try again.</span>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <button type="button" class="btn-close" aria-label="Close"></button>
                 </div>
 
-                <form id="contactForm">
+                <form id="contactForm" novalidate>
                     <div class="row g-3">
                         <div class="col-md-6">
                             <div class="form-floating">
-                                <input type="text" class="form-control" id="name" placeholder="Your Name" required>
+                                <input type="text" class="form-control" id="name" placeholder="Your Name" autocomplete="name" required>
                                 <label for="name">Your Name *</label>
                             </div>
                         </div>
+
                         <div class="col-md-6">
                             <div class="form-floating">
-                                <input type="email" class="form-control" id="email" placeholder="Your Email" required>
+                                <input type="email" class="form-control" id="email" placeholder="Your Email" autocomplete="email" required>
                                 <label for="email">Your Email *</label>
                             </div>
                         </div>
 
-                        <!-- NEW: Phone Number -->
                         <div class="col-12">
                             <div class="form-floating">
-                                <input type="text" class="form-control" id="phone" placeholder="Your Phone Number" required>
+                                <input type="text" class="form-control" id="phone" placeholder="Your Phone Number" inputmode="tel" autocomplete="tel" required>
                                 <label for="phone">Your Phone Number *</label>
                             </div>
                         </div>
@@ -197,13 +199,15 @@
                                 <label for="subject">Subject *</label>
                             </div>
                         </div>
+
                         <div class="col-12">
                             <div class="form-floating">
-                                    <textarea class="form-control" placeholder="Leave a message here" id="message"
-                                              style="height: 100px" required></textarea>
+                                <textarea class="form-control" placeholder="Leave a message here" id="message"
+                                          style="height: 100px" required></textarea>
                                 <label for="message">Message *</label>
                             </div>
                         </div>
+
                         <div class="col-12">
                             <button class="btn btn-primary py-3 px-5" type="submit" id="submitBtn">
                                 <span id="submitText">Send Message</span>
@@ -213,6 +217,8 @@
                     </div>
                 </form>
             </div>
+            <!-- ===== END GET IN TOUCH ===== -->
+
             <div class="col-lg-6 wow fadeIn" data-wow-delay="0.5s" style="min-height: 450px;">
                 <div class="position-relative rounded overflow-hidden h-100">
                     <iframe src="https://www.google.com/maps/embed?pb=!1m16!1m12!1m3!1d63460.024603861486!2d35.6806551802266!3d-6.2305333000887835!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!2m1!1sNtyuka%20Street%2C%20Dodoma%2C%20Tanzania!5e0!3m2!1sen!2stz!4v1743676130459!5m2!1sen!2stz" width="600" height="450" style="border:0;" allowfullscreen=""
@@ -306,16 +312,22 @@
 <!-- Template Javascript -->
 <script src="js/main.js"></script>
 
-<!-- Contact Form JavaScript (LOCAL ONLY) -->
+<!-- =========================
+     Contact Form JavaScript
+     (UPDATED ONLY for Get in Touch)
+     ========================= -->
 <script>
     // Local backend URL (Django)
     const API_BASE_URL = 'http://127.0.0.1:8000/api';
 
     document.addEventListener('DOMContentLoaded', function() {
         const contactForm = document.getElementById('contactForm');
+        if (!contactForm) return;
+
         const submitBtn = document.getElementById('submitBtn');
         const submitText = document.getElementById('submitText');
         const submitSpinner = document.getElementById('submitSpinner');
+
         const successAlert = document.getElementById('successAlert');
         const errorAlert = document.getElementById('errorAlert');
         const errorMessage = document.getElementById('errorMessage');
@@ -324,51 +336,61 @@
         successAlert.style.display = 'none';
         errorAlert.style.display = 'none';
 
+        // Close alert when close button is clicked (works with your CSS display:none)
+        document.querySelectorAll('#successAlert .btn-close, #errorAlert .btn-close').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const a = this.closest('.alert');
+                if (a) a.style.display = 'none';
+            });
+        });
+
         contactForm.addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            // Get form data
-            const formData = {
-                name: document.getElementById('name').value.trim(),
-                email: document.getElementById('email').value.trim(),
-                phone: document.getElementById('phone').value.trim(),
-                // optional aliases (in case backend accepts mobile)
-                mobile: document.getElementById('phone').value.trim(),
-                subject: document.getElementById('subject').value.trim(),
-                message: document.getElementById('message').value.trim()
-            };
+            const name = (document.getElementById('name')?.value || '').trim();
+            const email = (document.getElementById('email')?.value || '').trim();
+            const phone = (document.getElementById('phone')?.value || '').trim();
+            const subject = (document.getElementById('subject')?.value || '').trim();
+            const message = (document.getElementById('message')?.value || '').trim();
 
             // Basic validation
-            if (!formData.name || !formData.email || !formData.phone || !formData.subject || !formData.message) {
+            if (!name || !email || !phone || !subject || !message) {
                 showError('Please fill in all required fields.');
                 return;
             }
-
-            if (!isValidEmail(formData.email)) {
+            if (!isValidEmail(email)) {
                 showError('Please enter a valid email address.');
                 return;
             }
-
-            if (!isValidPhone(formData.phone)) {
+            if (!isValidPhone(phone)) {
                 showError('Please enter a valid phone number.');
                 return;
             }
 
-            // Show loading state
             setLoadingState(true);
 
             try {
+                // Send both standard + alias keys for compatibility with backend serializers
+                const payload = {
+                    name: name,
+                    email: email,
+                    mail: email,
+                    phone: phone,
+                    mobile: phone,
+                    subject: subject,
+                    message: message
+                };
+
                 const response = await fetch(`${API_BASE_URL}/contact/send`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify(formData),
+                    body: JSON.stringify(payload),
                     credentials: 'omit'
                 });
 
-                // Try to read JSON (DRF usually returns JSON)
                 let result = null;
                 const contentType = response.headers.get('content-type') || '';
                 if (contentType.includes('application/json')) {
@@ -379,28 +401,22 @@
                 }
 
                 if (!response.ok) {
-                    // Show DRF validation errors nicely if present
-                    if (result && result.errors) {
-                        const firstKey = Object.keys(result.errors)[0];
-                        const firstMsg = Array.isArray(result.errors[firstKey])
-                            ? result.errors[firstKey][0]
-                            : String(result.errors[firstKey]);
-                        throw new Error(firstMsg || 'Validation error.');
-                    }
-                    throw new Error(result.message || `Server error: ${response.status}`);
+                    throw new Error(pickError(result) || `Server error: ${response.status}`);
                 }
 
-                if (result.status === 'success') {
+                if (result && result.status === 'success') {
                     showSuccess();
                     contactForm.reset();
                 } else {
-                    throw new Error(result.message || 'Failed to send message. Please try again.');
+                    throw new Error(pickError(result) || 'Failed to send message. Please try again.');
                 }
+
             } catch (error) {
-                if (error.message && error.message.includes('Failed to fetch')) {
+                const msg = (error && error.message) ? error.message : 'An error occurred while sending your message. Please try again.';
+                if (msg.includes('Failed to fetch')) {
                     showError('Network error. Please check your internet connection and try again.');
                 } else {
-                    showError(error.message || 'An error occurred while sending your message. Please try again.');
+                    showError(msg);
                 }
             } finally {
                 setLoadingState(false);
@@ -424,7 +440,6 @@
             errorAlert.style.display = 'none';
             successAlert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-            // Auto-hide success message after 10 seconds
             setTimeout(() => {
                 successAlert.style.display = 'none';
             }, 10000);
@@ -448,12 +463,19 @@
             return phoneRegex.test(phone);
         }
 
-        // Close alert when close button is clicked
-        document.querySelectorAll('.alert .btn-close').forEach(button => {
-            button.addEventListener('click', function() {
-                this.closest('.alert').style.display = 'none';
-            });
-        });
+        function pickError(result) {
+            if (!result) return null;
+            if (typeof result.message === 'string' && result.message.trim()) return result.message.trim();
+
+            if (result.errors && typeof result.errors === 'object') {
+                const firstKey = Object.keys(result.errors)[0];
+                if (!firstKey) return null;
+                const firstVal = result.errors[firstKey];
+                if (Array.isArray(firstVal) && firstVal[0]) return String(firstVal[0]);
+                if (firstVal) return String(firstVal);
+            }
+            return null;
+        }
     });
 </script>
 </body>
