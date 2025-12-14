@@ -32,6 +32,17 @@
 
     <!-- Template Stylesheet -->
     <link href="css/style.css" rel="stylesheet">
+
+    <style>
+        .alert {
+            display: none;
+            margin-top: 16px;
+        }
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+        }
+    </style>
 </head>
 
 <body>
@@ -529,42 +540,60 @@ founding and management of the company
                             </p>
                             <h1 class="display-5 mb-5">Request A Call-Back</h1>
                         </div>
-                        <div class="row g-3">
-                            <div class="col-sm-6">
-                                <div class="form-floating">
-                                    <input type="text" class="form-control" id="name" placeholder="Your Name">
-                                    <label for="name">Your Name</label>
-                                </div>
-                            </div>
-                            <div class="col-sm-6">
-                                <div class="form-floating">
-                                    <input type="email" class="form-control" id="mail" placeholder="Your Email">
-                                    <label for="mail">Your Email</label>
-                                </div>
-                            </div>
-                            <div class="col-sm-6">
-                                <div class="form-floating">
-                                    <input type="text" class="form-control" id="mobile" placeholder="Your Mobile">
-                                    <label for="mobile">Your Mobile</label>
-                                </div>
-                            </div>
-                            <div class="col-sm-6">
-                                <div class="form-floating">
-                                    <input type="text" class="form-control" id="subject" placeholder="Subject">
-                                    <label for="subject">Subject</label>
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <div class="form-floating">
-                                    <textarea class="form-control" placeholder="Leave a message here" id="message"
-                                        style="height: 100px"></textarea>
-                                    <label for="message">Message</label>
-                                </div>
-                            </div>
-                            <div class="col-12 text-center">
-                                <button class="btn btn-primary w-100 py-3" type="submit">Submit Now</button>
-                            </div>
+
+                        <!-- Success and Error Messages -->
+                        <div id="cbSuccessAlert" class="alert alert-success alert-dismissible fade show" role="alert">
+                            <strong>Success!</strong> Your message has been sent successfully. We'll get back to you within 24 hours.
+                            <button type="button" class="btn-close" aria-label="Close"></button>
                         </div>
+
+                        <div id="cbErrorAlert" class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <strong>Error!</strong> <span id="cbErrorMessage">There was a problem sending your message. Please try again.</span>
+                            <button type="button" class="btn-close" aria-label="Close"></button>
+                        </div>
+
+                        <form id="callbackForm">
+                            <div class="row g-3">
+                                <div class="col-sm-6">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="name" placeholder="Your Name" required>
+                                        <label for="name">Your Name</label>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-floating">
+                                        <input type="email" class="form-control" id="mail" placeholder="Your Email" required>
+                                        <label for="mail">Your Email</label>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="mobile" placeholder="Your Mobile" required>
+                                        <label for="mobile">Your Mobile</label>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="subject" placeholder="Subject" required>
+                                        <label for="subject">Subject</label>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-floating">
+                                        <textarea class="form-control" placeholder="Leave a message here" id="message"
+                                            style="height: 100px" required></textarea>
+                                        <label for="message">Message</label>
+                                    </div>
+                                </div>
+                                <div class="col-12 text-center">
+                                    <button class="btn btn-primary w-100 py-3" type="submit" id="cbSubmitBtn">
+                                        <span id="cbSubmitText">Submit Now</span>
+                                        <span id="cbSubmitSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
                     </div>
                 </div>
             </div>
@@ -839,6 +868,151 @@ founding and management of the company
 
     <!-- Template Javascript -->
     <script src="js/main.js"></script>
+
+    <!-- Callback Form JavaScript (LOCAL ONLY) -->
+    <script>
+        // Local backend URL (Django)
+        const API_BASE_URL = 'http://127.0.0.1:8000/api';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const callbackForm = document.getElementById('callbackForm');
+            if (!callbackForm) return;
+
+            const submitBtn = document.getElementById('cbSubmitBtn');
+            const submitText = document.getElementById('cbSubmitText');
+            const submitSpinner = document.getElementById('cbSubmitSpinner');
+
+            const successAlert = document.getElementById('cbSuccessAlert');
+            const errorAlert = document.getElementById('cbErrorAlert');
+            const errorMessage = document.getElementById('cbErrorMessage');
+
+            // Hide alerts initially
+            successAlert.style.display = 'none';
+            errorAlert.style.display = 'none';
+
+            callbackForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const name = (document.getElementById('name')?.value || '').trim();
+                const mail = (document.getElementById('mail')?.value || '').trim();
+                const mobile = (document.getElementById('mobile')?.value || '').trim();
+                const subject = (document.getElementById('subject')?.value || '').trim();
+                const message = (document.getElementById('message')?.value || '').trim();
+
+                // Basic validation
+                if (!name || !mail || !mobile || !subject || !message) {
+                    showError('Please fill in all required fields.');
+                    return;
+                }
+                if (!isValidEmail(mail)) {
+                    showError('Please enter a valid email address.');
+                    return;
+                }
+
+                setLoadingState(true);
+
+                try {
+                    // Send BOTH alias and standard keys for maximum compatibility
+                    const payload = {
+                        name: name,
+                        email: mail,
+                        mail: mail,
+                        phone: mobile,
+                        mobile: mobile,
+                        subject: subject,
+                        message: message
+                    };
+
+                    const response = await fetch(`${API_BASE_URL}/contact/send`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(payload),
+                        credentials: 'omit'
+                    });
+
+                    let result = null;
+                    const contentType = response.headers.get('content-type') || '';
+                    if (contentType.includes('application/json')) {
+                        result = await response.json();
+                    } else {
+                        const text = await response.text();
+                        result = { status: 'error', message: text };
+                    }
+
+                    if (!response.ok) {
+                        if (result && result.errors) {
+                            const firstKey = Object.keys(result.errors)[0];
+                            const firstMsg = Array.isArray(result.errors[firstKey])
+                                ? result.errors[firstKey][0]
+                                : String(result.errors[firstKey]);
+                            throw new Error(firstMsg || 'Validation error.');
+                        }
+                        throw new Error(result.message || `Server error: ${response.status}`);
+                    }
+
+                    if (result.status === 'success') {
+                        showSuccess();
+                        callbackForm.reset();
+                    } else {
+                        throw new Error(result.message || 'Failed to send message. Please try again.');
+                    }
+                } catch (error) {
+                    if (error.message && error.message.includes('Failed to fetch')) {
+                        showError('Network error. Please check your internet connection and try again.');
+                    } else {
+                        showError(error.message || 'An error occurred while sending your message. Please try again.');
+                    }
+                } finally {
+                    setLoadingState(false);
+                }
+            });
+
+            function setLoadingState(loading) {
+                if (loading) {
+                    submitBtn.disabled = true;
+                    submitText.textContent = 'Sending...';
+                    submitSpinner.classList.remove('d-none');
+                } else {
+                    submitBtn.disabled = false;
+                    submitText.textContent = 'Submit Now';
+                    submitSpinner.classList.add('d-none');
+                }
+            }
+
+            function showSuccess() {
+                successAlert.style.display = 'block';
+                errorAlert.style.display = 'none';
+                successAlert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+                setTimeout(() => {
+                    successAlert.style.display = 'none';
+                }, 10000);
+            }
+
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorAlert.style.display = 'block';
+                successAlert.style.display = 'none';
+                errorAlert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            function isValidEmail(email) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return emailRegex.test(email);
+            }
+
+            // Close alert when close button is clicked
+            document.querySelectorAll('#cbSuccessAlert .btn-close, #cbErrorAlert .btn-close').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const a = this.closest('.alert');
+                    if (a) a.style.display = 'none';
+                });
+            });
+        });
+    </script>
 </body>
 
 </html>

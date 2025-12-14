@@ -182,6 +182,15 @@
                                 <label for="email">Your Email *</label>
                             </div>
                         </div>
+
+                        <!-- NEW: Phone Number -->
+                        <div class="col-12">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="phone" placeholder="Your Phone Number" required>
+                                <label for="phone">Your Phone Number *</label>
+                            </div>
+                        </div>
+
                         <div class="col-12">
                             <div class="form-floating">
                                 <input type="text" class="form-control" id="subject" placeholder="Subject" required>
@@ -322,18 +331,26 @@
             const formData = {
                 name: document.getElementById('name').value.trim(),
                 email: document.getElementById('email').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                // optional aliases (in case backend accepts mobile)
+                mobile: document.getElementById('phone').value.trim(),
                 subject: document.getElementById('subject').value.trim(),
                 message: document.getElementById('message').value.trim()
             };
 
             // Basic validation
-            if (!formData.name || !formData.email || !formData.subject || !formData.message) {
+            if (!formData.name || !formData.email || !formData.phone || !formData.subject || !formData.message) {
                 showError('Please fill in all required fields.');
                 return;
             }
 
             if (!isValidEmail(formData.email)) {
                 showError('Please enter a valid email address.');
+                return;
+            }
+
+            if (!isValidPhone(formData.phone)) {
+                showError('Please enter a valid phone number.');
                 return;
             }
 
@@ -423,6 +440,12 @@
         function isValidEmail(email) {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             return emailRegex.test(email);
+        }
+
+        function isValidPhone(phone) {
+            // allow +, digits, spaces, -, (), .
+            const phoneRegex = /^[+\d]([\d\s().-]{5,})$/;
+            return phoneRegex.test(phone);
         }
 
         // Close alert when close button is clicked
