@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Sombyo Admin - Messages</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+  <style>
+    :root{
+      --sb-blue:#0d6efd;
+      --sb-bg:#f6f8fb;
+      --sb-side:#0b2557;
+      --sb-card:#ffffff;
+      --sb-radius:18px;
+      --sb-shadow: 0 10px 25px rgba(11,37,87,.10);
+    }
+    body{ background: var(--sb-bg); }
+    .app{ min-height:100vh; }
+    .sidebar{ width:260px; background:var(--sb-side); color:#fff; }
+    .sidebar .nav-link{ color:rgba(255,255,255,.86); border-radius:12px; padding:.6rem .75rem; }
+    .sidebar .nav-link:hover{ background:rgba(255,255,255,.10); color:#fff; }
+    .sidebar .nav-link.active{ background:rgba(13,110,253,.25); color:#fff; }
+    .topbar{ background: linear-gradient(90deg, rgba(13,110,253,.95), rgba(11,94,215,.95)); color:#fff; }
+    .card-soft{ border:0; border-radius:var(--sb-radius); background:var(--sb-card); box-shadow:var(--sb-shadow); }
+    .avatar{
+      width:34px;height:34px;border-radius:50%;
+      background:rgba(255,255,255,.2);
+      display:flex;align-items:center;justify-content:center;
+      font-weight:700;
+    }
+    @media (min-width:992px){
+      .sidebar{ position:sticky; top:0; height:100vh; }
+      .content-wrap{ padding:22px; }
+    }
+    .table thead th{ white-space:nowrap; }
+    .muted-chip{
+      background: rgba(13,110,253,.08);
+      border: 1px solid rgba(13,110,253,.15);
+      border-radius: 999px;
+      padding: .2rem .6rem;
+      display:inline-flex;
+      gap:.4rem;
+      align-items:center;
+      color:#0b3d91;
+    }
+
+    /* ===== Mobile App Feel ===== */
+    @media (max-width: 991.98px){
+      body{ font-size: 13px; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+      .topbar .navbar-brand{ font-size: 16px !important; }
+      .topbar .btn{ padding: .35rem .55rem; }
+      .topbar .dropdown-toggle{ font-size: 13px; }
+
+      .content-wrap{
+        padding: 12px 12px calc(86px + env(safe-area-inset-bottom));
+      }
+
+      .mobile-shell{
+        border-radius: 24px;
+        background: rgba(255,255,255,.55);
+        box-shadow: 0 18px 40px rgba(11,37,87,.10);
+        padding: 12px;
+      }
+
+      .muted-chip{ font-size: 12px; }
+      .btn.btn-sm{ border-radius: 14px; }
+      .form-select-sm, .input-group-sm .form-control, .input-group-sm .input-group-text{ font-size: 13px; }
+    }
+
+    /* Mobile message cards */
+    .msg-card{
+      border: 1px solid rgba(13,110,253,.10);
+      border-radius: 18px;
+      background: rgba(255,255,255,.9);
+      box-shadow: 0 12px 22px rgba(11,37,87,.08);
+    }
+    .msg-meta{ font-size: 12px; color: rgba(33,37,41,.72); }
+    .msg-subject{ font-weight: 700; }
+    .chip{
+      border-radius: 999px;
+      padding: .22rem .55rem;
+      border: 1px solid rgba(0,0,0,.08);
+      background: rgba(13,110,253,.06);
+      font-size: 12px;
+      display:inline-flex;
+      align-items:center;
+      gap:.35rem;
+    }
+
+    /* Bottom Nav (mobile only) */
+    .bottom-nav{
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(0,0,0,.06);
+      z-index: 1050;
+    }
+    .bottom-nav .nav{
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .bottom-nav a{
+      flex: 1;
+      text-decoration: none;
+      color: #2b3a55;
+      border-radius: 16px;
+      padding: 10px 8px;
+      text-align: center;
+      font-size: 12px;
+      background: rgba(13,110,253,.06);
+      border: 1px solid rgba(13,110,253,.08);
+    }
+    .bottom-nav a.active{
+      background: rgba(13,110,253,.14);
+      border-color: rgba(13,110,253,.22);
+      color: #0b3d91;
+      font-weight: 600;
+    }
+    .bottom-nav i{ display:block; font-size: 18px; margin-bottom: 4px; }
+    @media (min-width: 992px){
+      .bottom-nav{ display:none; }
+    }
+  </style>
+</head>
+
+<body>
+<div class="app d-flex">
+
+  <aside class="sidebar d-none d-lg-block p-3">
+    <div class="d-flex align-items-center gap-2 mb-3">
+      <div class="p-2 rounded-3" style="background:rgba(255,255,255,.12)">
+        <i class="bi bi-envelope-paper"></i>
+      </div>
+      <div>
+        <div class="fw-semibold">Sombyo Admin</div>
+        <div class="small opacity-75">Messages</div>
+      </div>
+    </div>
+
+    <nav class="nav flex-column gap-1 mt-3">
+      <a class="nav-link" href="./dashboard.html"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
+      <a class="nav-link active" href="./messages.html"><i class="bi bi-envelope-paper me-2"></i> Messages</a>
+      <a class="nav-link" href="./account.html"><i class="bi bi-gear me-2"></i> Account</a>
+    </nav>
+  </aside>
+
+  <div class="offcanvas offcanvas-start" tabindex="-1" id="mobileSidebar">
+    <div class="offcanvas-header" style="background:#0b2557;color:#fff;">
+      <h6 class="offcanvas-title"><i class="bi bi-building-check me-2"></i>Sombyo Admin</h6>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-3" style="background:#0b2557;">
+      <nav class="nav flex-column gap-1">
+        <a class="nav-link text-white" href="./dashboard.html"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
+        <a class="nav-link active text-white" href="./messages.html"><i class="bi bi-envelope-paper me-2"></i> Messages</a>
+        <a class="nav-link text-white" href="./account.html"><i class="bi bi-gear me-2"></i> Account</a>
+      </nav>
+    </div>
+  </div>
+
+  <div class="content w-100">
+    <nav class="navbar topbar">
+      <div class="container-fluid px-3 px-lg-4">
+        <div class="d-flex align-items-center gap-2">
+          <button class="btn btn-outline-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar">
+            <i class="bi bi-list"></i>
+          </button>
+          <span class="navbar-brand mb-0 h1 text-white">Messages</span>
+        </div>
+
+        <div class="dropdown">
+          <button class="btn btn-outline-light d-flex align-items-center gap-2 dropdown-toggle" data-bs-toggle="dropdown">
+            <span class="avatar" id="avatar">S</span>
+            <span class="d-none d-sm-inline" id="who">Loading...</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="./account.html"><i class="bi bi-person-gear me-2"></i>Account</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><button class="dropdown-item text-danger" id="logout"><i class="bi bi-box-arrow-right me-2"></i>Logout</button></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="content-wrap p-3 p-lg-4">
+      <div class="mobile-shell">
+
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <span class="muted-chip" id="counts"><i class="bi bi-graph-up"></i> Loading stats...</span>
+            <button class="btn btn-outline-primary btn-sm" id="refreshStats">
+              <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+            </button>
+          </div>
+
+          <div class="d-flex flex-wrap gap-2">
+            <select id="status" class="form-select form-select-sm" style="min-width: 140px;">
+              <option value="all">All</option>
+              <option value="unread">Unread</option>
+              <option value="read">Read</option>
+            </select>
+            <div class="input-group input-group-sm" style="min-width: 240px;">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input id="q" class="form-control" placeholder="Search name, email, subject...">
+            </div>
+            <button id="btn" class="btn btn-primary btn-sm">
+              <i class="bi bi-funnel me-1"></i> Apply
+            </button>
+          </div>
+        </div>
+
+        <!-- Desktop/Tablet Table -->
+        <div class="card card-soft d-none d-md-block">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Status</th>
+                  <th>Date</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Subject</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="rows"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Mobile Cards -->
+        <div class="d-md-none" id="cards"></div>
+
+        <div class="d-flex align-items-center justify-content-between mt-3">
+          <div class="text-muted small" id="pageInfo">—</div>
+          <div class="btn-group">
+            <button class="btn btn-outline-primary btn-sm" id="prevBtn" disabled>
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <button class="btn btn-outline-primary btn-sm" id="nextBtn" disabled>
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="position-fixed top-0 end-0 p-3" style="z-index: 1080">
+        <div id="toast" class="toast" role="alert">
+          <div class="toast-header">
+            <i class="bi bi-info-circle text-primary me-2"></i>
+            <strong class="me-auto">Sombyo</strong>
+            <small class="text-muted">now</small>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+          </div>
+          <div class="toast-body" id="toastMsg">—</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Mobile Bottom Nav -->
+<div class="bottom-nav">
+  <div class="nav">
+    <a href="./dashboard.html"><i class="bi bi-speedometer2"></i>Dashboard</a>
+    <a class="active" href="./messages.html"><i class="bi bi-envelope-paper"></i>Messages</a>
+    <a href="./account.html"><i class="bi bi-gear"></i>Account</a>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const API = "http://127.0.0.1:8000/api/contact";
+let nextUrl = null;
+let prevUrl = null;
+
+function logout(){ localStorage.clear(); window.location.href="./login.html"; }
+
+async function apiFetch(url, options = {}) {
+  const access = localStorage.getItem("access");
+  if (!access) { logout(); return; }
+
+  options.headers = { ...(options.headers || {}), "Authorization": `Bearer ${access}` };
+  let res = await fetch(url, { ...options, cache: "no-store" });
+
+  if (res.status === 401) {
+    const refresh = localStorage.getItem("refresh");
+    const r = await fetch(`${API}/auth/refresh`, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({refresh}),
+      cache: "no-store"
+    });
+    const rd = await r.json().catch(() => ({}));
+    if (!r.ok) { logout(); return; }
+    localStorage.setItem("access", rd.access);
+    options.headers["Authorization"] = `Bearer ${rd.access}`;
+    res = await fetch(url, { ...options, cache: "no-store" });
+  }
+  return res;
+}
+
+function initials(name){
+  const n = (name||"").trim();
+  if (!n) return "S";
+  return n.slice(0,2).toUpperCase();
+}
+
+function showToast(msg){
+  document.getElementById("toastMsg").textContent = msg;
+  const t = new bootstrap.Toast(document.getElementById("toast"), { delay: 2200 });
+  t.show();
+}
+
+function escapeHtml(s){
+  return String(s ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function fmtDate(iso){
+  if (!iso) return "-";
+  try{
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return String(iso).replace("T"," ").replace("Z","");
+    return d.toLocaleString();
+  }catch{
+    return String(iso).replace("T"," ").replace("Z","");
+  }
+}
+
+document.getElementById("logout").onclick = logout;
+
+async function loadMe(){
+  const r = await apiFetch(`${API}/admin/me`);
+  const d = await r.json().catch(() => ({}));
+  document.getElementById("who").textContent = d.username || "Admin";
+  document.getElementById("avatar").textContent = initials(d.username);
+}
+
+async function loadCounts(){
+  const r = await apiFetch(`${API}/admin/stats`);
+  const d = await r.json().catch(() => ({}));
+  document.getElementById("counts").innerHTML =
+    `<i class="bi bi-graph-up"></i> Total: <b>${d.total ?? "-"}</b> · Unread: <b>${d.unread ?? "-"}</b> · Read: <b>${d.read ?? "-"}</b>`;
+}
+
+function buildUnreadBtn(id){
+  return `<button class="btn btn-sm btn-outline-warning ms-1" data-id="${id}" data-action="unread">
+            <i class="bi bi-arrow-counterclockwise me-1"></i> Unread
+          </button>`;
+}
+
+function buildViewBtn(id){
+  return `<a class="btn btn-sm btn-primary" href="./message.html?id=${id}">
+            <i class="bi bi-eye me-1"></i> View
+          </a>`;
+}
+
+function attachUnreadHandlers(container, reloadUrl){
+  container.querySelectorAll("button[data-action='unread']").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const id = btn.getAttribute("data-id");
+      const res = await apiFetch(`${API}/admin/messages/${id}/unread`, { method: "POST" });
+      if (!res || !res.ok) { showToast("Failed to mark unread."); return; }
+      showToast("Marked as unread.");
+      await loadCounts();
+      await loadList(reloadUrl);
+    });
+  });
+}
+
+async function loadList(urlOverride = null) {
+  await loadCounts();
+
+  const status = document.getElementById("status").value;
+  const q = document.getElementById("q").value.trim();
+
+  let url;
+  if (urlOverride) {
+    url = new URL(urlOverride);
+  } else {
+    url = new URL(`${API}/admin/messages`);
+    url.searchParams.set("status", status);
+    if (q) url.searchParams.set("q", q);
+  }
+
+  const r = await apiFetch(url.toString());
+  const d = await r.json().catch(() => ({}));
+
+  nextUrl = d.next;
+  prevUrl = d.previous;
+
+  document.getElementById("prevBtn").disabled = !prevUrl;
+  document.getElementById("nextBtn").disabled = !nextUrl;
+
+  const count = d.count ?? 0;
+  const results = d.results || [];
+  const page = Number(url.searchParams.get("page") || 1);
+  document.getElementById("pageInfo").textContent =
+    `Page ${page} · Showing ${results.length} of ${count} results`;
+
+  // ===== Desktop Table Rendering =====
+  const rows = document.getElementById("rows");
+  rows.innerHTML = "";
+
+  results.forEach(m => {
+    const badge = m.is_read
+      ? `<span class="badge text-bg-success"><i class="bi bi-envelope-check me-1"></i>Read</span>`
+      : `<span class="badge text-bg-warning"><i class="bi bi-envelope-exclamation me-1"></i>Unread</span>`;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${badge}</td>
+      <td class="text-muted small">${escapeHtml(fmtDate(m.created_at))}</td>
+      <td>${escapeHtml(m.name)}</td>
+      <td class="text-muted">${escapeHtml(m.email)}</td>
+      <td>${escapeHtml(m.subject)}</td>
+      <td class="text-end">
+        ${buildViewBtn(m.id)}
+        ${m.is_read ? buildUnreadBtn(m.id) : `
+          <span class="btn btn-sm btn-outline-secondary ms-1 disabled" title="Open to mark as read">
+            <i class="bi bi-check2-circle me-1"></i> Read
+          </span>
+        `}
+      </td>
+    `;
+    rows.appendChild(tr);
+  });
+
+  attachUnreadHandlers(rows, url.toString());
+
+  // ===== Mobile Cards Rendering =====
+  const cards = document.getElementById("cards");
+  cards.innerHTML = "";
+
+  results.forEach(m => {
+    const badge = m.is_read
+      ? `<span class="chip" style="background:rgba(25,135,84,.10);border-color:rgba(25,135,84,.18);color:#146c43;">
+           <i class="bi bi-envelope-check"></i> Read
+         </span>`
+      : `<span class="chip" style="background:rgba(255,193,7,.12);border-color:rgba(255,193,7,.22);color:#7a5b00;">
+           <i class="bi bi-envelope-exclamation"></i> Unread
+         </span>`;
+
+    const div = document.createElement("div");
+    div.className = "msg-card p-3 mb-2";
+    div.innerHTML = `
+      <div class="d-flex align-items-start justify-content-between gap-2">
+        <div>
+          <div class="msg-subject">${escapeHtml(m.subject)}</div>
+          <div class="msg-meta mt-1">
+            <i class="bi bi-person me-1"></i>${escapeHtml(m.name)}
+            <span class="mx-1">·</span>
+            <i class="bi bi-envelope me-1"></i>${escapeHtml(m.email)}
+          </div>
+          <div class="msg-meta mt-1">
+            <i class="bi bi-clock me-1"></i>${escapeHtml(fmtDate(m.created_at))}
+          </div>
+        </div>
+        <div>${badge}</div>
+      </div>
+
+      <div class="d-flex gap-2 mt-3">
+        ${buildViewBtn(m.id)}
+        ${m.is_read ? `<button class="btn btn-sm btn-outline-warning" data-id="${m.id}" data-action="unread">
+                          <i class="bi bi-arrow-counterclockwise me-1"></i>Unread
+                        </button>`
+                   : `<button class="btn btn-sm btn-outline-secondary" disabled title="Open to mark as read">
+                          <i class="bi bi-check2-circle me-1"></i>Read
+                        </button>`
+        }
+      </div>
+    `;
+    cards.appendChild(div);
+  });
+
+  attachUnreadHandlers(cards, url.toString());
+}
+
+document.getElementById("refreshStats").onclick = () => loadCounts();
+document.getElementById("btn").onclick = () => loadList(null);
+
+document.getElementById("q").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") loadList(null);
+});
+
+document.getElementById("prevBtn").onclick = () => prevUrl && loadList(prevUrl);
+document.getElementById("nextBtn").onclick = () => nextUrl && loadList(nextUrl);
+
+loadMe();
+loadList();
+</script>
+</body>
+</html>
